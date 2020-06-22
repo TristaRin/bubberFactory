@@ -1,5 +1,3 @@
-    
-
 # 找出甘特圖的最長時間
 def getMaxSpan(gantt) :
     maxSpan = 0
@@ -8,7 +6,7 @@ def getMaxSpan(gantt) :
             maxSpan = g[-1]
     return maxSpan
 
-# 計算工作結束時產生的廢料
+# 計算生產線a產生的廢料
 def calcuScrapA(ganttA, jobBufA, macOrdA, tableA, typeOfRubberWaste) :
     maxSpan = getMaxSpan(ganttA)
 
@@ -40,8 +38,10 @@ def calcuScrapA(ganttA, jobBufA, macOrdA, tableA, typeOfRubberWaste) :
         for time in range(1, maxSpan+1) :
             scrapA[rw][time] += scrapA[rw][time-1]
 
+    # 將廢料情況回傳
     return scrapA    
 
+# 給生產線b的計算用，用來找（此工作）如此的需求何時能被滿足
 def findEnoughTime(start, resource, typeOfResource, require) :
 
     # 找哪個時段的廢料是夠的
@@ -60,29 +60,35 @@ def findEnoughTime(start, resource, typeOfResource, require) :
 
         # 若此時間的原料足夠，則可替第一台機器安排第一項工作
         if isEnough == True :
-            # print('yes', i)
+            # print('this time is enough', i)
             # 回傳此時間
             return i
         # print('----')
     # 永遠沒有足夠的時候
     return -1
 
+# 給生產線b的計算用，用來更新原料狀況
 def updateResource(enoughTime, resource, typeOfResource, table, job, m) :
-    # print('enoughTime', enoughTime, resource['條'])
+    # row 是時間
     for i in range(enoughTime, len(resource['條'])) :
+        # column 是原料種類
         for r in typeOfResource :
             resource[r][i] -= table[job][m]['require'][r]
     return resource
 
+# 取得甘特圖，此函數給a以外的生產線（有考慮原料是否充足）用
 def getGantt(jobBuf, macOrd, table, typeOfResource, resource) :
     gantt = list()
-
+    
+    # 每個 job
     for j in range(0, len(jobBuf)) :
+        # 每台 machine
         for i in range(0, len(macOrd)) :
+            # 當前是哪個 job 要在那台 machine 上工作多久時間（pt）
             job = jobBuf[j]
             m = macOrd[i]
             pt = table[job][m]['pt']
-            # 工作所需的原料
+            # 工作所需的原料量
             require = table[job][m]['require']
 
             # 若是第一台機器的第一個工作
@@ -96,10 +102,10 @@ def getGantt(jobBuf, macOrd, table, typeOfResource, resource) :
                 if enoughTime == -1 :
                     print('永遠不夠別排了1')
                     return gantt
-                
+                # 將工作排入甘特圖
                 gantt.append([enoughTime, enoughTime + pt])
 
-            # 若是屬於第一個工作
+            # 若是其他台機器的第一個工作
             elif j == 0 :
                 # 開始時間要看上一台機器的結束時間
                 start = gantt[i-1][2*i-1]
@@ -110,10 +116,10 @@ def getGantt(jobBuf, macOrd, table, typeOfResource, resource) :
                 if enoughTime == -1 :
                     print('永遠不夠別排了2')
                     return gantt
-                
+                # 將工作排入甘特圖
                 gantt.append([enoughTime, enoughTime + pt])
 
-            # 若是第一台機器的工作
+            # 若是第一台機器的其他工作
             elif i == 0 :
                 # 開始時間要看這台機器前一個工作的結束時間
                 start = gantt[0][2*j-1]
@@ -124,7 +130,7 @@ def getGantt(jobBuf, macOrd, table, typeOfResource, resource) :
                 if enoughTime == -1 :
                     print('永遠不夠別排了3')
                     return gantt
-
+                # 將工作排入甘特圖
                 gantt[0] += [enoughTime, enoughTime + pt]
             # 剩下的工作
             else :
@@ -137,32 +143,37 @@ def getGantt(jobBuf, macOrd, table, typeOfResource, resource) :
                 if enoughTime == -1 :
                     print('永遠不夠別排了4')
                     return gantt
-
+                # 將工作排入甘特圖
                 gantt[i] += [enoughTime, enoughTime + pt]
 
             # print(job, m, '開始', enoughTime, '結束', enoughTime+pt)
             # print('更新前')            
             # print(resource['條'])
             # print(resource['粉'])
-            # 若resource紀錄的時間長度不夠用,要補齊
+
+            # 若resource紀錄的時間長度不夠用,要補齊再去更新
             lenDrop = enoughTime + pt + 1 - len(resource['條'])
             if lenDrop != 0 :
                 for r in typeOfResource :
                     resource[r] += [resource[r][-1] for i in range(lenDrop)]
             # 更新原料狀況
             resource = updateResource(enoughTime, resource, typeOfResource, table, job, m)
+            
             # print('更新後')            
             # print(resource['條'])
             # print(resource['粉'])
             # print('-----------------------')
+    # 將甘特圖結果回傳
     return gantt
 
-# 取得甘特圖
+# 取得甘特圖，此函數只給生產線a（不考慮原料是否充足）用
 def getGanttA(jobBufA, macOrdA, tableA) :
     ganttA = list()
-
+    # 每個 job
     for j in range(0, len(jobBufA)) :
+        # 每台 machine
         for i in range(0, len(macOrdA)) :
+            # 當前是哪個 job 要在那台 machine 上工作多久時間（pt）
             job = jobBufA[j]
             m = macOrdA[i]
             pt = tableA[job][m]['pt']
@@ -171,24 +182,29 @@ def getGanttA(jobBufA, macOrdA, tableA) :
             if j == 0 and i == 0 :
                 # 開始時間為零
                 start = 0
+                # 將工作排入甘特圖
                 ganttA.append([start, start + pt])
             # 若是屬於第一個工作
             elif j == 0 :
                 # 開始時間要看上一台機器的結束時間
                 start = ganttA[i-1][2*i-1]
+                # 將工作排入甘特圖
                 ganttA.append([start, start + pt])
 
             # 若是第一台機器的工作
             elif i == 0 :
                 # 開始時間要看這台機器前一個工作的結束時間
                 start = ganttA[0][2*j-1]
+                # 將工作排入甘特圖
                 ganttA[0] += [start, start + pt]
             # 剩下的工作
             else :
                 # 開始時間要看上一台機器的結束時間及這台機器前一個工作的結束時間
                 start = max(ganttA[i-1][2*i-1], ganttA[i][2*j-1])
+                # 將工作排入甘特圖
                 ganttA[i] += [start, start + pt]
 
+    # 將甘特圖結果回傳
     return ganttA
 
 def main():

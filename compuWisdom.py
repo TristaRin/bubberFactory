@@ -193,8 +193,16 @@ def getGanttA(jobBufA, macOrdA, tableA) :
 
     # 將甘特圖結果回傳
     return ganttA
+    
+# 若傳進來的參數是字串請用此api
+def inputString(jobString) :
+    inputJobOrd = list(map(int, jobString.split()))
+    return useAPI(inputJobOrd)
+# 若傳進來的參數是list請用此api
+def inputList(inputJobOrd) :
+    return useAPI(inputJobOrd)
+
 def useAPI(inputJobOrd) :
-    # inputJobOrd = list(map(int, input().split()))
     jobBufA, jobBufB = list(), list()
     for x in inputJobOrd :
         job = 'j' + str(x%3+1)
@@ -235,6 +243,8 @@ def useAPI(inputJobOrd) :
     return result
 
 def main():
-    print(useAPI([0, 2, 1, 5, 4, 3]))
+    print(inputString('0 2 1 5 4 3'))
+    print(inputList([0, 2, 1, 5, 4, 3]))
+
 
 main()

@@ -45,7 +45,7 @@ def calcuScrapA(ganttA, jobBufA, macOrdA, tableA, typeOfRubberWaste) :
 def findEnoughTime(start, resource, typeOfResource, require) :
 
     # 找哪個時段的廢料是夠的
-    for i in range(start, len(resource['條'])) :
+    for i in range(start, len(resource[typeOfResource[0]])) :
         isEnough = True
 
         # print('原料', '需求')
@@ -70,7 +70,7 @@ def findEnoughTime(start, resource, typeOfResource, require) :
 # 給生產線b的計算用，用來更新原料狀況
 def updateResource(enoughTime, resource, typeOfResource, table, job, m) :
     # row 是時間
-    for i in range(enoughTime, len(resource['條'])) :
+    for i in range(enoughTime, len(resource[typeOfResource[0]])) :
         # column 是原料種類
         for r in typeOfResource :
             resource[r][i] -= table[job][m]['require'][r]
@@ -148,11 +148,11 @@ def getGantt(jobBuf, macOrd, table, typeOfResource, resource) :
 
             # print(job, m, '開始', enoughTime, '結束', enoughTime+pt)
             # print('更新前')            
-            # print(resource['條'])
-            # print(resource['粉'])
+            # print(resource[typeOfResource[0]])
+            # print(resource[typeOfResource[1]])
 
             # 若resource紀錄的時間長度不夠用,要補齊再去更新
-            lenDrop = enoughTime + pt + 1 - len(resource['條'])
+            lenDrop = enoughTime + pt + 1 - len(resource[typeOfResource[0]])
             if lenDrop != 0 :
                 for r in typeOfResource :
                     resource[r] += [resource[r][-1] for i in range(lenDrop)]
@@ -160,8 +160,8 @@ def getGantt(jobBuf, macOrd, table, typeOfResource, resource) :
             resource = updateResource(enoughTime, resource, typeOfResource, table, job, m)
             
             # print('更新後')            
-            # print(resource['條'])
-            # print(resource['粉'])
+            # print(resource[typeOfResource[0]])
+            # print(resource[typeOfResource[1]])
             # print('-----------------------')
     # 將甘特圖結果回傳
     return gantt
@@ -206,43 +206,31 @@ def getGanttA(jobBufA, macOrdA, tableA) :
 
     # 將甘特圖結果回傳
     return ganttA
-
-def main():
-    # tableA = {'J1': {'M1': [4, 3, 1], 'M2': [5, 3, 2]},
-    #           'J2': {'M1': [5, 1, 3], 'M2': [2, 2, 2]},
-    #           'J3': {'M1': [3, 2, 2], 'M2': [6, 1, 1]}
-    #           }
-
-    tableA = {'J1': {'M1': {'pt': 4, 'rubberWaste': {'條': 3, '粉': 1}}, 'M2': {'pt': 5, 'rubberWaste': {'條': 3, '粉': 2}}},
-              'J2': {'M1': {'pt': 5, 'rubberWaste': {'條': 1, '粉': 3}}, 'M2': {'pt': 2, 'rubberWaste': {'條': 2, '粉': 2}}},
-              'J3': {'M1': {'pt': 3, 'rubberWaste': {'條': 2, '粉': 2}}, 'M2': {'pt': 6, 'rubberWaste': {'條': 1, '粉': 1}}}
-              }
-
-    # tableB = {'j1': {'m1': [2, 0, 1], 'm2': [1, 1, 0]},
-    #           'j2': {'m1': [3, 2, 2], 'm2': [2, 1, 1]},
-    #           'j3': {'m1': [4, 7, 1], 'm2': [4, 1, 5]}}
-    
-    tableB = {'j1': {'m1': {'pt': 2, 'require': {'條': 0, '粉': 1}}, 'm2': {'pt': 1, 'require': {'條': 1, '粉': 0}}},
-              'j2': {'m1': {'pt': 3, 'require': {'條': 2, '粉': 2}}, 'm2': {'pt': 2, 'require': {'條': 1, '粉': 1}}},
-              'j3': {'m1': {'pt': 4, 'require': {'條': 7, '粉': 1}}, 'm2': {'pt': 4, 'require': {'條': 1, '粉': 5}}}
-              }
-
-    # 有幾個工作和幾台機器和幾種廢料
-    # mNum = 2
-    # jobNum = 3
-    # rubburWasteNum = 2
-
-    # 生產線的代完成工作順序
-    jobBufA = ['J1', 'J3', 'J2']
-    jobBufB = ['j3', 'j2', 'j1']
-
+def useAPI(inputJobOrd) :
+    # inputJobOrd = list(map(int, input().split()))
+    jobBufA, jobBufB = list(), list()
+    for x in inputJobOrd :
+        job = 'j' + str(x%3+1)
+        if x <= 2 :
+            jobBufA.append(job)
+        else :
+            jobBufB.append(job)
     # 生產工作必經的機器順序
     macOrdA = ['M1', 'M2']
     macOrdB = ['m1', 'm2']
+    # # 廢料種類
+    typeOfRubberWaste = ['type1', 'type2']
 
-    # 廢料種類
-    typeOfRubberWaste = ['條', '粉']
 
+    tableA = {'j1': {'M1': {'pt': 4, 'rubberWaste': {'type1': 3, 'type2': 1}}, 'M2': {'pt': 5, 'rubberWaste': {'type1': 3, 'type2': 2}}},
+              'j2': {'M1': {'pt': 5, 'rubberWaste': {'type1': 1, 'type2': 3}}, 'M2': {'pt': 2, 'rubberWaste': {'type1': 2, 'type2': 2}}},
+              'j3': {'M1': {'pt': 3, 'rubberWaste': {'type1': 2, 'type2': 2}}, 'M2': {'pt': 6, 'rubberWaste': {'type1': 1, 'type2': 1}}}
+              }
+ 
+    tableB = {'j1': {'m1': {'pt': 2, 'require': {'type1': 0, 'type2': 1}}, 'm2': {'pt': 1, 'require': {'type1': 1, 'type2': 0}}},
+              'j2': {'m1': {'pt': 3, 'require': {'type1': 2, 'type2': 2}}, 'm2': {'pt': 2, 'require': {'type1': 1, 'type2': 1}}},
+              'j3': {'m1': {'pt': 4, 'require': {'type1': 7, 'type2': 1}}, 'm2': {'pt': 4, 'require': {'type1': 1, 'type2': 5}}}
+              }
 
     # 生產線A的甘特圖
     ganttA = getGanttA(jobBufA, macOrdA, tableA)
@@ -250,10 +238,241 @@ def main():
 
     # 生產線A產生的廢料
     scrapA = calcuScrapA(ganttA, jobBufA, macOrdA, tableA, typeOfRubberWaste)
-    # print(scrapA['條'])
-    # print(scrapA['粉'])
+    # print(scrapA[typeOfResource[0]])
+    # print(scrapA[typeOfResource[1]])
 
     ganttB = getGantt(jobBufB, macOrdB, tableB, typeOfRubberWaste, scrapA)
-    print(ganttB)
+    # print(ganttB)
+    result = max(getMaxSpan(ganttA), getMaxSpan(ganttB))
+    return result
+
+def main():
+    # # lineNum = 2
+    # # jobNum = 3
+    # # mNum = 2
+    # # rubburWasteNum = 2
+    
+    # # print('請輸入生產線個數')
+    # # print('請輸入工作個數')
+    # # print('請輸入機器個數')
+    # # print('請輸入廢料種類個數')
+
+    # # 生產線個數
+    # lineNum = int(input())
+    # # 工作個數
+    # jobNum = int(input())
+    # # 機器個數
+    # mNum = int(input())
+    # # 廢料種類個數
+    # rubburWasteNum = int(input())
+
+    # # 細節對照表，每條生產線的某工作在某機器的處理時間及廢料或原料資訊等等
+    # table = list()
+
+    # # 初始化細節對照表
+    # for l in range(lineNum) :
+    #     table.append(dict())
+    #     table[l] = dict()
+
+    #     for j in range(jobNum) :
+    #         job = 'j' + str(j+1)
+    #         table[l][job] = dict()
+
+    #         for i in range(mNum) :
+    #             m = 'm' + str(i+1)
+    #             table[l][job][m] = dict()
+    #             # 輸入處理時間
+    #             # print('請輸入', l, '生產線上:', job, '在', m, '上的處理時間')
+    #             table[l][job][m]['pt'] = int(input())
+    #             table[l][job][m]['rubberWaste'] = dict()
+    #             table[l][job][m]['require'] = dict()
+
+    #             for r in range(rubburWasteNum) :
+    #                 rw = 'type' + str(r+1)
+    #                 if l == 0 :
+    #                     # 輸入此種廢料數量
+    #                     # print('請輸入廢料')
+    #                     table[l][job][m]['rubberWaste'][rw] = int(input())
+    #                 else :
+    #                     # 輸入此種原料數量
+    #                     # print('請輸入原料需求')
+    #                     table[l][job][m]['require'][rw] = int(input())
+                
+    #             # print('生產線', l, '工作', job, '機器', m)
+    #             # print(table[l][job][m])
+
+    # 機器流程表（每條生產線的）
+    # 廢料種類名稱表
+    # 待辦工作順序（每條生產線的）
+    # jobBuf = list()
+    # macOrd = list()
+    # for l in range(lineNum) :
+
+    #     # print('請輸入生產線', l, '的工作順序')
+    #     jobBuf.append(input().split())
+    #     # print('請輸入生產線', l, '的機器順序')
+    #     macOrd.append(input().split())
+
+    # # print('請輸入廢料名稱')
+    # typeOfRubberWaste = input().split()
+
+
+    # # 生產線的代完成工作順序
+    # # jobBufA = ['J1', 'J3', 'J2']
+    # # jobBufB = ['j3', 'j2', 'j1']
+
+    # macOrdA = macOrd[0]
+    # macOrdB = macOrd[1]
+    # tableA = table[0]
+    # tableB = table[1]
+    # //////////////////////////////////////////////////////////////////////////
+    # jobBufA, jobBufB = list(), list()
+    # inputJobOrd = list(map(int, input().split()))
+    # for x in inputJobOrd :
+    #     job = 'j' + str(x%3+1)
+    #     if x <= 2 :
+    #         jobBufA.append(job)
+    #     else :
+    #         jobBufB.append(job)
+
+    # # 生產工作必經的機器順序
+    # macOrdA = ['M1', 'M2']
+    # macOrdB = ['m1', 'm2']
+    # # # 廢料種類
+    # typeOfRubberWaste = ['type1', 'type2']
+
+
+    # tableA = {'j1': {'M1': {'pt': 4, 'rubberWaste': {'type1': 3, 'type2': 1}}, 'M2': {'pt': 5, 'rubberWaste': {'type1': 3, 'type2': 2}}},
+    #           'j2': {'M1': {'pt': 5, 'rubberWaste': {'type1': 1, 'type2': 3}}, 'M2': {'pt': 2, 'rubberWaste': {'type1': 2, 'type2': 2}}},
+    #           'j3': {'M1': {'pt': 3, 'rubberWaste': {'type1': 2, 'type2': 2}}, 'M2': {'pt': 6, 'rubberWaste': {'type1': 1, 'type2': 1}}}
+    #           }
+ 
+    # tableB = {'j1': {'m1': {'pt': 2, 'require': {'type1': 0, 'type2': 1}}, 'm2': {'pt': 1, 'require': {'type1': 1, 'type2': 0}}},
+    #           'j2': {'m1': {'pt': 3, 'require': {'type1': 2, 'type2': 2}}, 'm2': {'pt': 2, 'require': {'type1': 1, 'type2': 1}}},
+    #           'j3': {'m1': {'pt': 4, 'require': {'type1': 7, 'type2': 1}}, 'm2': {'pt': 4, 'require': {'type1': 1, 'type2': 5}}}
+    #           }
+
+    # # 生產線A的甘特圖
+    # ganttA = getGanttA(jobBufA, macOrdA, tableA)
+    # print(ganttA)
+
+    # # 生產線A產生的廢料
+    # scrapA = calcuScrapA(ganttA, jobBufA, macOrdA, tableA, typeOfRubberWaste)
+    # # print(scrapA[typeOfResource[0]])
+    # # print(scrapA[typeOfResource[1]])
+
+    # ganttB = getGantt(jobBufB, macOrdB, tableB, typeOfRubberWaste, scrapA)
+    # print(ganttB)
+    print(useAPI([0, 2, 1, 5, 4, 3]))
 
 main()
+# 輸入測資
+# 2
+# 3
+# 2
+# 2
+# 4
+# 3
+# 1
+# 5
+# 3
+# 2
+# 5
+# 1
+# 3
+# 2
+# 2
+# 2
+# 3
+# 2
+# 2
+# 6
+# 1
+# 1
+# 2
+# 0
+# 1
+# 1
+# 1
+# 0
+# 3
+# 2
+# 2
+# 2
+# 1
+# 1
+# 4
+# 7
+# 1
+# 4
+# 1
+# 5
+# 輸出範例
+# [[0, 4, 4, 7, 7, 12], [4, 9, 9, 15, 15, 17]]
+# [[9, 13, 15, 18, 18, 20], [13, 17, 18, 20, 20, 21]]
+
+
+    # for l in range(lineNum) :
+    #     for j in range(jobNum) :
+    #         job = jobBuf[0][j]
+    #         # print(table[l][job])
+    #         for i in range(mNum) :
+    #             m = macOrd[l][i]
+    #             # print(table[l][job][m])
+    #             # print(table[l][job][m]['pt'])
+    #             for r in range(rubburWasteNum) :
+    #                 rw = typeOfRubberWaste[r]
+    #                 # print(table[l][job][m]['rubberWaste'][rw])
+    #                 # print(table[l][job][m]['require'][rw])
+
+
+    # # 初始化對照表們
+    # for l in range(lineNum) :
+    #     jobBuf.append(list())
+    #     macOrd.append(list())
+    #     table.append(dict())
+    #     # 初始化工作名稱表
+    #     for j in range(jobNum) :
+    #         jobBuf[l].append('j' + str(j+1))
+    #     #  初始化機器名稱表
+    #     for i in range(mNum) :
+    #         macOrd[l].append('m' + str(i+1))
+    # # 初始化廢料種類名稱表
+    # for r in range(rubburWasteNum) :
+    #     typeOfRubberWaste.append('type' + str(r+1))
+
+
+
+
+    # # 初始化細節對照表
+    # for l in range(lineNum) :
+
+    #     table[l] = dict()
+    #     for j in range(jobNum) :
+    #         job = jobBuf[l][j]
+
+    #         table[l][job] = dict()
+    #         for i in range(mNum) :
+    #             m = macOrd[l][i]
+    #             table[l][job][m] = dict()
+    #             # 輸入處理時間
+    #             print('請輸入', l, '生產線上:', job, '在', m, '上的處理時間')
+    #             table[l][job][m]['pt'] = int(input())
+
+    #             table[l][job][m]['rubberWaste'] = dict()
+    #             table[l][job][m]['require'] = dict()
+    #             for r in range(rubburWasteNum) :
+    #                 rw = typeOfRubberWaste[r]
+    #                 if l == 0 :
+    #                     # 輸入此種廢料數量
+    #                     print('請輸入廢料')
+    #                     table[l][job][m]['rubberWaste'][rw] = int(input())
+    #                 else :
+    #                     # 輸入此種原料數量
+    #                     print('請輸入原料需求')
+    #                     table[l][job][m]['require'][rw] = int(input())
+                
+    #             # print('生產線', l, '工作', job, '機器', m)
+    #             # print(table[l][job][m])
+
+
